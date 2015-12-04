@@ -7,6 +7,7 @@ define ipset (
     'hashsize' => '1024',
     'maxelem'  => '65536',
   },
+  $keep_in_sync = true,
 ) {
   include ipset::params
 
@@ -45,16 +46,18 @@ define ipset (
     }
 
     # sync if needed by helper script
-    exec { "sync_ipset_${title}":
-      # use helper script to do the sync
-      command   => "/usr/local/sbin/ipset_sync -c '${::ipset::params::config_path}'    -i ${title}",
-      # only when difference with in-kernel set is detected
-      unless    => "/usr/local/sbin/ipset_sync -c '${::ipset::params::config_path}' -d -i ${title}",
+    if $keep_in_sync {
+      exec { "sync_ipset_${title}":
+        # use helper script to do the sync
+        command   => "/usr/local/sbin/ipset_sync -c '${::ipset::params::config_path}'    -i ${title}",
+        # only when difference with in-kernel set is detected
+        unless    => "/usr/local/sbin/ipset_sync -c '${::ipset::params::config_path}' -d -i ${title}",
 
-      path      => [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ],
+        path      => [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ],
 
-      require   => Package['ipset'],
-      subscribe => File["${::ipset::params::config_path}/${title}.set"],
+        require   => Package['ipset'],
+        subscribe => File["${::ipset::params::config_path}/${title}.set"],
+      }
     }
   } else {
     # ensuring absence
