@@ -45,20 +45,21 @@ define ipset (
       }
     }
 
+    if $keep_in_sync {
+        $sync_param = ""
+    } else {
+        $sync_param = "-f"
+    }
     # sync if needed by helper script
     exec { "sync_ipset_${title}":
       # use helper script to do the sync
-      command   => "/usr/local/sbin/ipset_sync -c '${::ipset::params::config_path}'    -i ${title}",
+      command => "/usr/local/sbin/ipset_sync -c '${::ipset::params::config_path}' ${sync_param} -i ${title}",
       # only when difference with in-kernel set is detected
-      unless    => "/usr/local/sbin/ipset_sync -c '${::ipset::params::config_path}' -d -i ${title}",
+      unless  => "/usr/local/sbin/ipset_sync -c '${::ipset::params::config_path}' -d -i ${title}",
 
-      path      => [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ],
+      path    => [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ],
 
-      require   => Package['ipset'],
-    }
-
-    if $keep_in_sync {
-        File["${::ipset::params::config_path}/${title}.set"] ~> Exec["sync_ipset_${title}"]
+      require => Package['ipset'],
     }
   } else {
     # ensuring absence
