@@ -30,18 +30,21 @@ define ipset (
       file { "${::ipset::params::config_path}/${title}.set":
         ensure  => present,
         source  => $set,
+        notify  => Exec["sync_ipset_${title}"],
       }
     } elsif $set =~ /^file:\/\// {
       # passed as target node file
       file { "${::ipset::params::config_path}/${title}.set":
         ensure  => present,
         source  => regsubst($set, '^.{7}', ''),
+        notify  => Exec["sync_ipset_${title}"],
       }
     } else {
       # passed directly as content (from template for example)
       file { "${::ipset::params::config_path}/${title}.set":
         ensure  => present,
         content => $set,
+        notify  => Exec["sync_ipset_${title}"],
       }
     }
 
